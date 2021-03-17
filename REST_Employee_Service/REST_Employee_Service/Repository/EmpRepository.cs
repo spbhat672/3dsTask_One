@@ -1,4 +1,5 @@
 ﻿
+using MySql.Data.MySqlClient;
 using REST_Employee_Service.Models;
 using System;
 using System.Collections.Generic;
@@ -10,126 +11,122 @@ using System.Web;
 
 namespace REST_Employee_Service.Repository
 {
-    public class EmpRepository
+    public static class EmpRepository
     {
-        private SqlConnection con;
-        //To Handle connection related activities    
-        private void connection()
+        private static string conString = ConfigurationManager.ConnectionStrings[conString].ToString();       
+   
+        public static void AddEmployee(Models.EmpModel model)
         {
-            string constr = ConfigurationManager.ConnectionStrings["getconn"].ToString();
-            con = new SqlConnection(constr);
-
+            using (MySqlConnection con = new MySqlConnection(conString))
+            {
+                con.Open();
+                using (MySqlCommand cmd = new MySqlCommand())
+                {
+                    cmd.Connection = con;
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "Insert into employee(Name,City,Salary) Values(" + model.Name + "," + model.City + "," + model.Salary + ")";
+                    cmd.ExecuteNonQuery();
+                }
+            }            
         }
-        //To Add Employee details    
-        public bool AddEmployee(Models.EmpModel obj)
+
+        public static EmpModel GetEmployee(int? id)
         {
-
-            connection();
-            SqlCommand com = new SqlCommand("AddNewEmpDetails", con);
-            com.CommandType = CommandType.StoredProcedure;
-            com.Parameters.AddWithValue("@Name", obj.Name);
-            com.Parameters.AddWithValue("@City", obj.City);
-            com.Parameters.AddWithValue("@Address", obj.Address);
-
-            con.Open();
-            int i = com.ExecuteNonQuery();
-            con.Close();
-            if (i >= 1)
+            EmpModel model = new EmpModel();
+            using (MySqlConnection con = new MySqlConnection(conString))
             {
-
-                return true;
-
+                con.Open();
+                using (MySqlCommand cmd = new MySqlCommand())
+                {
+                    cmd.Connection = con;
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "Select * from employee where EmpId = " + id + "";
+                    MySqlDataReader rdr = cmd.ExecuteReader();
+                    model = (EmpModel)rdr.GetEnumerator().Current;                    
+                }
+                con.Close();
             }
-            else
-            {
-
-                return false;
-            }
-
-
+            return model;
         }
+
         //To view employee details with generic list     
-        public List<EmpModel> GetAllEmployees()
-        {
-            connection();
+        public static List<EmpModel> GetAllEmployees()
+        {            
             List<EmpModel> EmpList = new List<EmpModel>();
 
-
-            SqlCommand com = new SqlCommand("GetEmployees", con);
-            com.CommandType = CommandType.StoredProcedure;
-            SqlDataAdapter da = new SqlDataAdapter(com);
-            DataTable dt = new DataTable();
-
-            con.Open();
-            da.Fill(dt);
-            con.Close();
-            //Bind EmpModel generic list using dataRow     
-            foreach (DataRow dr in dt.Rows)
+            using (MySqlConnection con = new MySqlConnection(conString))
             {
+                con.Open();
+                using (MySqlCommand cmd = new MySqlCommand())
+                {
+                    cmd.Connection = con;
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "Select * from employee";
 
-                EmpList.Add(
-
-                    new EmpModel
+                    using (MySqlDataAdapter da = new MySqlDataAdapter(cmd))
                     {
+                        DataTable dt = new DataTable();
+                        con.Open();
+                        da.Fill(dt);
 
-                        Empid = Convert.ToInt32(dr["Id"]),
-                        Name = Convert.ToString(dr["Name"]),
-                        City = Convert.ToString(dr["City"]),
-                        Address = Convert.ToString(dr["Address"])
+                        foreach(DataRow row in dt.Rows)
+                        {
+                            EmpList.Add(
+                                new EmpModel
+                                {
 
+                                    EmpId = Convert.ToInt32(row["EmpId"]),
+                                    Name = Convert.ToString(row["Name"]),
+                                    City = Convert.ToString(row["City"]),
+                                    Salary = Convert.ToInt32(row["Salary"])
+
+                                }
+                                );
+                        }
                     }
-                    );
-            }
+                }
+            }            
 
             return EmpList;
         }
-        //To Update Employee details    
-        public bool UpdateEmployee(EmpModel obj)
+        
+
+        public static int UpdateEmployee(EmpModel model)
         {
-
-            connection();
-            SqlCommand com = new SqlCommand("UpdateEmpDetails", con);
-
-            com.CommandType = CommandType.StoredProcedure;
-            com.Parameters.AddWithValue("@EmpId", obj.EmpId);
-            com.Parameters.AddWithValue("@Name", obj.Name);
-            com.Parameters.AddWithValue("@City", obj.City);
-            com.Parameters.AddWithValue("@Address", obj.Address);
-            con.Open();
-            int i = com.ExecuteNonQuery();
-            con.Close();
-            if (i >= 1)
+            int i;
+            using (MySqlConnection con = new MySqlConnection(conString))
             {
+                con.Open();
+                using (MySqlCommand cmd = new MySqlCommand())
+                {
+                    cmd.Connection = con;
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "Update employee set Name = " + model.Name + ",City = " + model.City + ",Salary = " + model.Salary + " where EmpId = "+model.EmpId+"";
 
-                return true;
+                    //returns no of rows affected
+                    i = cmd.ExecuteNonQuery();
+                }
             }
-            else
-            {
-                return false;
-            }
+            return i;
         }
+
         //To delete Employee details    
-        public bool DeleteEmployee(int Id)
+        public static int DeleteEmployee(int Id)
         {
-
-            connection();
-            SqlCommand com = new SqlCommand("DeleteEmpById", con);
-
-            com.CommandType = CommandType.StoredProcedure;
-            com.Parameters.AddWithValue("@EmpId", Id);
-
-            con.Open();
-            int i = com.ExecuteNonQuery();
-            con.Close();
-            if (i >= 1)
+            int i; // no of rows deleted
+            using (MySqlConnection con = new MySqlConnection(conString))
             {
-                return true;
+                con.Open();
+                using (MySqlCommand cmd = new MySqlCommand())
+                {
+                    cmd.Connection = con;
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "Delete employee where EmpId = " + Id + "";
+                    i = cmd.ExecuteNonQuery();
+                }
             }
-            else
-            {
 
-                return false;
-            }
+            return i;
         }
     }
 }
