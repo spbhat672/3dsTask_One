@@ -1,4 +1,5 @@
 ﻿using MVC_Employee_CRUD.Models;
+using MVC_Employee_CRUD.WebMethod;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,11 +13,11 @@ namespace MVC_Employee_CRUD.Controllers
         // GET: Employee/GetAllEmpDetails    
         public ActionResult GetAllEmpDetails()
         {
-
-            EmpRepository EmpRepo = new EmpRepository();
             ModelState.Clear();
-            return View(EmpRepo.GetAllEmployees());
+            List<EmpModel> empList = ServiceRepository.GeAllEmployee();
+            return View(empList);
         }
+
         // GET: Employee/AddEmployee    
         public ActionResult AddEmployee()
         {
@@ -31,11 +32,14 @@ namespace MVC_Employee_CRUD.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    EmpRepository EmpRepo = new EmpRepository();
 
-                    if (EmpRepo.AddEmployee(Emp))
+                    if (ServiceRepository.SaveEmployee(Emp) != null)
                     {
                         ViewBag.Message = "Employee details added successfully";
+                    }
+                    else
+                    {
+                        ViewBag.Message = "Error Saving Employee Details.";
                     }
                 }
 
@@ -50,24 +54,17 @@ namespace MVC_Employee_CRUD.Controllers
         // GET: Employee/EditEmpDetails/5    
         public ActionResult EditEmpDetails(int id)
         {
-            EmpRepository EmpRepo = new EmpRepository();
-
-
-
-            return View(EmpRepo.GetAllEmployees().Find(Emp => Emp.Empid == id));
-
+            List<EmpModel> empList = ServiceRepository.GeAllEmployee();
+            return View(empList.Find(Emp => Emp.EmpId == id));
         }
 
         // POST: Employee/EditEmpDetails/5    
-        [HttpPost]
-
+        [System.Web.Mvc.HttpPost]
         public ActionResult EditEmpDetails(int id, EmpModel obj)
         {
             try
             {
-                EmpRepository EmpRepo = new EmpRepository();
-
-                EmpRepo.UpdateEmployee(obj);
+                ServiceRepository.UpdateEmployee(obj);
                 return RedirectToAction("GetAllEmpDetails");
             }
             catch
@@ -81,14 +78,12 @@ namespace MVC_Employee_CRUD.Controllers
         {
             try
             {
-                EmpRepository EmpRepo = new EmpRepository();
-                if (EmpRepo.DeleteEmployee(id))
+                if (ServiceRepository.DeleteEmployee(id)==true)
                 {
                     ViewBag.AlertMsg = "Employee details deleted successfully";
 
                 }
                 return RedirectToAction("GetAllEmpDetails");
-
             }
             catch
             {
