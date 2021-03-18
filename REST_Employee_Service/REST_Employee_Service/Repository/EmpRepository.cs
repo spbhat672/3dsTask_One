@@ -13,7 +13,7 @@ namespace REST_Employee_Service.Repository
 {
     public static class EmpRepository
     {
-        private static string conString = ConfigurationManager.ConnectionStrings[conString].ToString();       
+        private static string conString = "server = localhost; port=3306;database=3dstask;user=root;password=santu672;";//ConfigurationManager.AppSettings. ConnectionStrings["conString"].ToString(); 
    
         public static void AddEmployee(Models.EmpModel model)
         {
